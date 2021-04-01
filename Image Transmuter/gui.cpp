@@ -1,5 +1,6 @@
 #include "gui.h"
 
+#include <QApplication>
 #include <QFileDialog>
 #include <QFontDialog>
 #include <QTextStream>
@@ -16,128 +17,106 @@ GUI::GUI(QWidget *parent) : QWidget(parent)
 
 GUI::~GUI()
 {
-    m_lStatus->deleteLater();
+    m_hlStatus->deleteLater();
     m_ipwInput->deleteLater();
     m_ipwOutput->deleteLater();
 
+    m_leScale->deleteLater();
+    m_leThreshold->deleteLater();
     m_pbToggleControls->deleteLater();
-
+    m_pbQuit->deleteLater();
     m_pbChooseImage->deleteLater();
-    m_lChooseImage->deleteLater();
-
     m_pbChooseText->deleteLater();
-    m_lChooseText->deleteLater();
-
     m_pbChooseFont->deleteLater();
-    m_lChooseFont->deleteLater();
+    m_pbConvert->deleteLater();
+    m_pbSave->deleteLater();
 
     m_leScaleValidator->deleteLater();
     m_leThresholdValidator->deleteLater();
 
-    m_leScale->deleteLater();
-    m_leThreshold->deleteLater();
-
-    m_pbConvert->deleteLater();
-    m_pbSave->deleteLater();
-
-    m_ctrlLayout->deleteLater();
+    m_controlsLayout->deleteLater();
     m_mainLayout->deleteLater();
-
-    m_dummyWidget->deleteLater();
-    m_blankLayout->deleteLater();
 }
 
 void GUI::makeGUI()
 {
-    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-
-    m_lStatus = new QLabel("Status", this);
+    m_hlStatus = new HistoryLabel("", this);
+    m_hlStatus->AddMessage("Status");
 
     m_ipwInput = new ImagePreviewWidget(this);
     m_ipwOutput = new ImagePreviewWidget(this);
 
-    m_pbToggleControls = new QPushButton("ON", this);
-    m_pbToggleControls->setFixedWidth(64);
+    m_pbToggleControls = new QPushButton("Turn ON", this);
     m_pbToggleControls->setCheckable(true);
-    m_pbToggleControls->setChecked(false);
+    m_pbToggleControls->setChecked(true);
 
     m_teText = new QTextEdit(this);
-    m_teText->setFixedHeight(150);
+    m_teText->setFixedHeight(textboxFixedHeight);
 
+    m_leScale = new QLineEdit ("", this);
+    m_leThreshold = new QLineEdit ("", this);
+    m_leScale->setPlaceholderText("Scale: {1-13}");
+    m_leThreshold->setPlaceholderText("Threshold:{0-255,0-255,0-255}");
+
+    m_pbQuit = new QPushButton("X", this);
     m_pbChooseImage = new QPushButton("Choose Image", this);
-    m_lChooseImage = new QLabel("Image File: ", this);
-    // m_lChooseImage->setFixedWidth(m_mainLayout->geometry().width() / 2.0f);
-    m_lChooseImage->setWordWrap(true);
-
     m_pbChooseText = new QPushButton("Choose Text", this);
-    m_lChooseText = new QLabel("Text File: ", this);
-    m_lChooseText->setWordWrap(true);
-
     m_pbChooseFont = new QPushButton("Choose Font", this);
-    m_lChooseFont = new QLabel("Font: ", this);
-    m_lChooseFont->setWordWrap(true);
-
-    m_leScale = new QLineEdit ("Put scale here (1-13).", this);
-    m_lScale = new QLabel ("Scale: ", this);
-
-    m_leThreshold = new QLineEdit ("Put threshold for rgb components here (0-255,0-255,0-255)", this);
-    m_lThreshold = new QLabel ("Threshold: ", this);
-
     m_pbConvert = new QPushButton ("Convert", this);
-
     m_pbSave = new QPushButton ("Save", this);
+
+    m_pbToggleControls->setFixedSize(2*buttonControls,buttonControls);
+    m_pbQuit->setFixedSize(buttonSmall, buttonSmall);
+    m_pbChooseImage->setFixedWidth(buttonFixedWidth);
+    m_pbChooseText->setFixedWidth(buttonFixedWidth);
+    m_pbChooseFont->setFixedWidth(buttonFixedWidth);
+    m_pbConvert->setFixedWidth(buttonFixedWidth);
+    m_pbSave->setFixedWidth(buttonFixedWidth);
 
     disableControls();
     setupValidators();
     setupConnections();
     setupLayout();
+
+    updateUI(false);
 }
 
 void GUI::setupLayout()
 {
     m_mainLayout = new QGridLayout(this);
 
-    m_mainLayout->addWidget(m_lStatus, 0, 0, 1, 2);
-    m_mainLayout->addWidget(m_ipwInput, 1, 0, 5, 1);
-    m_mainLayout->addWidget(m_ipwOutput, 1, 1, 5, 1);
-    m_mainLayout->addWidget(m_pbToggleControls, 7, 0, 1, 2, Qt::AlignCenter);
+    m_mainLayout->addWidget(m_pbQuit, 0, 3, 1, 1, Qt::AlignRight);
+    m_mainLayout->addWidget(m_hlStatus, 0, 0, 1, 4);
 
-    m_ctrlLayout = new QGridLayout(this);
-    m_ctrlLayout->setSpacing(1);
-    m_ctrlLayout->setColumnStretch(0, 1);
-    m_ctrlLayout->setColumnStretch(1, 1);
-    m_ctrlLayout->setMargin(10);
+    m_mainLayout->addWidget(m_ipwInput, 1, 0, 5, 2);
+    m_mainLayout->addWidget(m_ipwOutput, 1, 2, 5, 2);
+    m_mainLayout->addWidget(m_pbToggleControls, 6, 0, 1, 4, Qt::AlignCenter);
 
-    m_ctrlLayout->addWidget(m_teText, 0, 0, 2, 2);
+    m_controlsLayout = new QGridLayout(this);
+    m_controlsLayout->setSpacing(1);
+    m_controlsLayout->setColumnStretch(0, 1);
+    m_controlsLayout->setColumnStretch(1, 1);
+    m_controlsLayout->setMargin(10);
 
-    m_ctrlLayout->addWidget(m_pbChooseImage, 2, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_lChooseImage, 2, 1, 1, 1);
+    m_controlsLayout->addWidget(m_teText,        0, 0, 2, 4);
 
-    m_ctrlLayout->addWidget(m_pbChooseText, 3, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_lChooseText, 3, 1, 1, 1);
+    m_controlsLayout->addWidget(m_pbChooseImage, 2, 0, 1, 1);
+    m_controlsLayout->addWidget(m_pbChooseText,  2, 1, 1, 1);
+    m_controlsLayout->addWidget(m_pbChooseFont,  2, 2, 1, 1);
+    m_controlsLayout->addWidget(m_pbConvert,     2, 3, 1, 1);
 
-    m_ctrlLayout->addWidget(m_pbChooseFont, 4, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_lChooseFont, 4, 1, 1, 1);
+    m_controlsLayout->addWidget(m_leScale,       3, 0, 1, 2);
+    m_controlsLayout->addWidget(m_leThreshold,   3, 2, 1, 2);
 
-    m_ctrlLayout->addWidget(m_leScale, 5, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_lScale, 5, 1, 1, 1);
+    m_controlsLayout->addWidget(m_pbSave,        4, 0, 1, 4, Qt::AlignCenter);
 
-    m_ctrlLayout->addWidget(m_leThreshold, 6, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_lThreshold, 6, 1, 1, 1);
-
-    m_ctrlLayout->addWidget(m_pbConvert, 7, 0, 1, 1);
-    m_ctrlLayout->addWidget(m_pbSave, 7, 1, 1, 1);
-
-    m_mainLayout->addLayout(m_ctrlLayout, 8, 0, 7, 2);
-
-    m_dummyWidget = new QWidget(this);
-    m_dummyWidget->setFixedHeight(1);
-
-    m_blankLayout = new QGridLayout(this);
-    m_blankLayout->addWidget(m_dummyWidget, 8, 0, 1, 2);
+    m_mainLayout->addLayout(m_controlsLayout,    8, 0, 5, 4);
 
     setLayout(m_mainLayout);
 }
+
+
+
 
 void GUI::setupValidators()
 {
@@ -155,62 +134,77 @@ void GUI::setupValidators()
 
 void GUI::setupConnections()
 {
+    // Here we connect signals, emitted by widgets when they receive click, return pressed
+    // or text changed events, with corresponding slots in this class.
     connect(m_pbToggleControls, SIGNAL(clicked()), this, SLOT(OnToggleControls()));
+    connect(m_pbQuit, SIGNAL(clicked()), this, SLOT(OnQuit()));
     connect(m_pbChooseImage, SIGNAL(clicked()), this, SLOT(OnChooseImage()));
     connect(m_pbChooseText, SIGNAL(clicked()), this, SLOT(OnChooseText()));
-    connect(m_pbChooseFont, SIGNAL(clicked()), this, SLOT(OnChooseFont()));
-    connect(m_leScale, SIGNAL(returnPressed()), this, SLOT(OnScaleChanged()));
-    connect(m_leThreshold, SIGNAL(returnPressed()), this, SLOT(OnThresholdChanged()));
+    connect(m_pbChooseFont, SIGNAL(clicked()), this, SLOT(OnChooseFont()));    
     connect(m_pbConvert, SIGNAL(clicked()), this, SLOT(OnConvertButton()));
     connect(m_pbSave, SIGNAL(clicked()), this, SLOT(OnSaveButton()));
+    connect(m_leScale, SIGNAL(returnPressed()), this, SLOT(OnScaleChanged()));
+    connect(m_leThreshold, SIGNAL(returnPressed()), this, SLOT(OnThresholdChanged()));
     connect(m_teText, SIGNAL(textChanged()), this, SLOT(OnTextChanged()));
+    connect(this, SIGNAL(UpdateStatus(const QString&)), this, SLOT(OnUpdateStatus(const QString&)));
 }
 
 void GUI::disableControls()
 {
+    // Disable all controls to let user choose parameters step by step.
+
+    // m_pbChooseImage is enabled by default
     m_pbChooseText->setEnabled(false);
     m_pbChooseFont->setEnabled(false);
     m_leScale->setEnabled(false);
     m_leThreshold->setEnabled(false);
     m_pbConvert->setEnabled(false);
-    m_pbConvert->setEnabled(false);
+    m_pbSave->setEnabled(false);
 }
 
 void GUI::updateUI(bool showControls)
 {
-    qDebug() << QString("There are %1 items in the controls list").arg(m_ctrlLayout->count());
+    qDebug() << QString("There are %1 items in the controls list").arg(m_controlsLayout->count());
 
     if (showControls)
     {
-        m_mainLayout->removeItem(m_blankLayout);
-        m_mainLayout->addLayout(m_ctrlLayout, 8, 0, 7, 2);
+        m_mainLayout->addLayout(m_controlsLayout, 8, 0, 7, 4);
 
-        for (int idx = 0; idx < m_ctrlLayout->count(); ++idx)
+        for (int idx = 0; idx < m_controlsLayout->count(); ++idx)
         {
-            QLayoutItem* item = m_ctrlLayout->itemAt(idx);
+            QLayoutItem* item = m_controlsLayout->itemAt(idx);
             item->widget()->show();
         }
     }
     else
     {
-        m_mainLayout->removeItem(m_ctrlLayout);
-        m_mainLayout->addLayout(m_blankLayout, 8, 0, 1, 1);
+        m_mainLayout->removeItem(m_controlsLayout);
 
-        for (int idx = 0; idx < m_ctrlLayout->count(); ++idx)
+        for (int idx = 0; idx < m_controlsLayout->count(); ++idx)
         {
-            QLayoutItem* item = m_ctrlLayout->itemAt(idx);
+            QLayoutItem* item = m_controlsLayout->itemAt(idx);
             item->widget()->hide();
         }
     }
 
+    QRect g = geometry();
+    g.setWidth(m_mainLayout->minimumSize().width());
+    g.setHeight(m_mainLayout->minimumSize().height());
+    setGeometry(g);
+
+    // resize(m_mainLayout->minimumSize());
+    updateGeometry();
+    repaint();
 }
 
-void GUI::tuneOtherUIElements(ControlElement &element)
+void GUI::updateUIElement(ControlElement &element)
 {
+    // This switch statement is used for moving the user step by step across all
+    // the stages of process. When everything is set, he may change settings.
+
     switch (element)
     {
-        case ControlElement::ChooseImage:
-            m_pbSave->setEnabled(false);
+        case ControlElement::ChooseImage:            
             m_pbChooseImage->setEnabled(false);
             m_pbChooseText->setEnabled(true);
             break;
@@ -230,19 +224,18 @@ void GUI::tuneOtherUIElements(ControlElement &element)
             m_leThreshold->setEnabled(true);
             break;
 
-        case ControlElement::ChooseThreshold:
-            m_leThreshold->setEnabled(false);
-            m_pbConvert->setEnabled(true);
-            break;
-
-        case ControlElement::ButtonConvert:
-            m_pbConvert->setEnabled(true);
+        case ControlElement::ChooseThreshold:            
             m_pbChooseImage->setEnabled(true);
             m_pbChooseText->setEnabled(true);
             m_pbChooseFont->setEnabled(true);
             m_leScale->setEnabled(true);
             m_leThreshold->setEnabled(true);
-            m_pbSave->setEnabled(true);            
+            m_pbConvert->setEnabled(true);
+            m_pbSave->setEnabled(false);
+            break;
+
+        case ControlElement::ButtonConvert:
+            m_pbSave->setEnabled(true);
             break;
 
         case ControlElement::ButtonSave:
@@ -262,14 +255,13 @@ void GUI::OnChooseImage()
     // Send signal over airmail, someone will find it sometimes.
     emit ImageChanged(path);
 
-    // Update statuses labels and set preview image.
-    m_lChooseImage->setText(QString("Image File: %1").arg(path));
-    m_lStatus->setText(QString("New input image has been set: %1").arg(path));
+    // Update status and set preview image.
+    emit UpdateStatus(QString("New input image has been set: %1").arg(path));
     m_ipwInput->setImage(QImage(path));
 
     // Hide other UI elements to make user do it step by step.
     m_currentUIElement = ControlElement::ChooseImage;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnChooseText()
@@ -295,8 +287,7 @@ void GUI::OnChooseText()
             m_teText->setText(text);
 
             // Yaaarrgh, we're sailing forwards. Update status.
-            m_lStatus->setText(QString("New text has been set: %1").arg(path));
-            m_lChooseText->setText(QString("Text File: %1").arg(path));
+            emit UpdateStatus(QString("New text has been set: %1").arg(path));
 
             // Send pigeon with letter tied to leg. Hope it won't be shot.
             emit TextChanged(text);
@@ -308,7 +299,7 @@ void GUI::OnChooseText()
 
     // Hide other UI elements.
     m_currentUIElement = ControlElement::ChooseText;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnChooseFont()
@@ -319,20 +310,18 @@ void GUI::OnChooseFont()
     QFont font = QFontDialog::getFont(&bOk);
 
     if (bOk)
-        m_lStatus->setText("New font has been chosen.");
+        emit UpdateStatus("New font has been chosen.");
     else
-        m_lStatus->setText("Default font has been chosen.");
+        emit UpdateStatus("Default font has been chosen.");
 
     // Here we gather information into a string to pass it to the label,
     // So that we could see the parameters of the chosen font.
     QString fontItalic = (font.italic()) ? "true" : "false";
     QString fontBold = (font.bold()) ? "true" : "false";
-    QString fontParametersText = QString("Family: %1. Size: %2. Italic: %3. Bold: %4 ").arg(font.family()).arg(font.pointSize())
-                                                                                       .arg(fontItalic).arg(fontBold);
+    QString fontParametersText = QString("%1: S-%2 I-%3 B-%4.").arg(font.family()).arg(font.pointSize()).arg(fontItalic).arg(fontBold);
 
     // What would we do without statuses update?
-    m_lChooseFont->setText(fontParametersText);
-    m_lStatus->setText(QString("Workflow font has been set to: %1").arg(fontParametersText));
+    emit UpdateStatus(QString("Workflow font has been set to: %1").arg(fontParametersText));
 
     // Also we emit the font, so other class could use it later.
     // Kinda lot of emitting, strange...
@@ -340,7 +329,7 @@ void GUI::OnChooseFont()
 
     // This extremely hard step again.
     m_currentUIElement = ControlElement::ChooseFont;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnScaleChanged()
@@ -350,15 +339,14 @@ void GUI::OnScaleChanged()
     QString string = static_cast<QLineEdit*>(sender())->text();
 
     // Here again. Meet the StAtUsEs!
-    m_lScale->setText(QString("Scale: %1").arg(string));
-    m_lStatus->setText(QString("Pixel scale parameter has been set to: %1").arg(string));
+    emit UpdateStatus(QString("Pixel scale parameter has been set to: %1").arg(string));
 
     // Scale is emitting. Savvy?
     emit ScaleChanged(string);
 
     // Once more.
     m_currentUIElement = ControlElement::ChooseScale;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnThresholdChanged()
@@ -371,33 +359,32 @@ void GUI::OnThresholdChanged()
     QString constrained = constraintThreshold(unconstrained);
 
     // Return resulting string of constrained values back to lineedit. And update statuses, of course.
+    emit UpdateStatus(QString("RGB Threshold values have been set to: %1").arg(constrained));
     m_leThreshold->setText(constrained);
-    m_lThreshold->setText(QString("Threshold: %1").arg(constrained));
-    m_lStatus->setText(QString("RGB Threshold values have been set to: %1").arg(constrained));
 
     // Something in the air. Do you hear?
     emit ThresholdChanged(constrained);
 
     // Here we go again.
     m_currentUIElement = ControlElement::ChooseThreshold;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnImageConverted(const QImage &image)
 {
     // When this slot receives image, we update status and set preview item.
-    m_lStatus->setText("Received Output Image. Trying to show its preview.");
+    emit UpdateStatus("Received Output Image. Trying to show its preview.");
     m_ipwOutput->setImage(image);
 
     // Also tune other UI elements
     m_currentUIElement = ControlElement::ButtonConvert;
-    tuneOtherUIElements(m_currentUIElement);
+    updateUIElement(m_currentUIElement);
 }
 
 void GUI::OnUpdateStatus(const QString& status)
 {
-    // This is the receiver slot for updates, sent by logic class.
-    m_lStatus->setText(status);
+    // This is the receiver slot for updates, sent by gui and logic class.
+    m_hlStatus->AddMessage(status);
 }
 
 void GUI::OnTextChanged()
@@ -429,37 +416,34 @@ QString GUI::constraintThreshold(const QString& input)
     return compoundString;
 }
 
-QPair<QString, QWidget *> GUI::controlFor(const QString &name, QWidget *widget)
-{
-    QPair<QString, QWidget*> pair;
-
-    pair.first = name;
-    pair.second = widget;
-
-    return pair;
-}
-
 void GUI::OnToggleControls()
 {
-    qDebug() << "In GUI::OnToggleControls";
+    // When user clicks toggle button, that is responsible for showing/hiding of controls, we do next:
+    // If the button is in checked state, set its text to "Turn ON" and redraw UI using updateUI method with showControls = false.
+    // If the button is not in checked state, set its text to "Turn OFF" and redraw UI using updateUI method with showControls = true.
 
     QPushButton* button = static_cast<QPushButton*>(sender());
     if (button->isCheckable())
     {
-        if (!button->isChecked())
-        {
-            qDebug() << "Button is not checked.";
-
-            button->setText("ON");
-            updateUI(true);
-        }
-
         if (button->isChecked())
         {
-            qDebug() << "Button is checked.";
-
-            button->setText("OFF");
+            button->setText("Turn ON");
             updateUI(false);
         }
+
+        if (!button->isChecked())
+        {
+            button->setText("Turn OFF");
+            updateUI(true);
+        }        
     }
+
+    int width = m_mainLayout->minimumSize().width();
+    int height = m_mainLayout->minimumSize().height();
+    emit UpdateUI(QString("%1,%2").arg(width).arg(height));
+}
+
+void GUI::OnQuit()
+{
+    qApp->quit();
 }

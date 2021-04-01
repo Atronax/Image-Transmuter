@@ -1,12 +1,12 @@
 #include <QApplication>
 
-#include "controller.h"
+#include "manager.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    Controller c;
+    Manager c;
     c.show();    
 
     return app.exec();

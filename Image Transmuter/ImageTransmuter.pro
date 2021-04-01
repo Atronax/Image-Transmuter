@@ -8,14 +8,16 @@ QT += core gui widgets
 SOURCES += main.cpp \
     Helpers/imageconversionthread.cpp \
     Helpers/imagepreviewwidget.cpp \
-    controller.cpp \
     gui.cpp \
-    logic.cpp
+    historylabel.cpp \
+    logic.cpp \
+    manager.cpp
 
 HEADERS += \
     Helpers/imageconversionthread.h \
     Helpers/imagepreviewwidget.h \
-    controller.h \
     gui.h \
+    historylabel.h \
     logic.h \
+    manager.h \
     types.h

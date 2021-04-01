@@ -4,10 +4,17 @@
 #include <QPainter>
 #include <QDebug>
 
+#include "imagepreviewwidget.h"
+
 ImageConversionThread::ImageConversionThread(const QImage& reference, float from, float to,
                                              Scale& scale, Threshold& threshold, Font& font, QString& text)
-    : m_from(from), m_to(to),
-      m_scale(scale), m_threshold(threshold), m_font(font), m_text(text)
+    : m_from(from),
+      m_to(to),
+      m_scale(scale),
+      m_threshold(threshold),
+      m_font(font),
+      m_text(text),
+      bDone(false)
 {
     setImageFragment(reference, from, to);
 }
@@ -18,6 +25,10 @@ ImageConversionThread::~ImageConversionThread()
 
 void ImageConversionThread::setImageFragment(const QImage& reference, float from, float to)
 {
+    // TO DO:
+    // Когда изображение делим на 4 куска для потоков, они теряют полосы на границах.
+    // 1-2, 2-3, 3-4. Нужно посмотреть, как исправить это. Завтра.
+
     // Reference: base image we use to separate into jobs for threads.
     // From: percentage of image we're beginning our processing at.
     // To  : percentage of image we're stopping  out processing at.
@@ -26,10 +37,17 @@ void ImageConversionThread::setImageFragment(const QImage& reference, float from
     // If to = 0.5, from = 0.25, then to - from = 0.5 - 0.25 = 0.25,
     // the original fragment will gave height of 25% of reference.height().
 
-    originalFragment = QImage(reference.width(), (to - from)*reference.height(), QImage::Format_RGB888);
 
+    originalFragment = QImage(reference.width(), ceil((to - from)*reference.height()), QImage::Format_RGB888);
 
-    for (int h = from*reference.height(), ho = 0; h < to*reference.height(), ho < originalFragment.height(); ++h, ++ho)
+    int hFrom = from*reference.height();
+    int hTo   = to*reference.height();
+
+    if (hFrom != 0) ++hFrom;
+
+    qDebug() << QString("%1 - %2 - %3").arg((to - from)*reference.height()).arg(from*reference.height()).arg(to*reference.height());
+
+    for (int h = hFrom, ho = 0; h < hTo, ho < originalFragment.height(); ++h, ++ho)
     {
         for (int w = 0; w < reference.width(); ++w)
         {
@@ -37,6 +55,11 @@ void ImageConversionThread::setImageFragment(const QImage& reference, float from
             originalFragment.setPixel(w, ho, pixel);
         }
     }
+
+    // Lets see what we have in our fragment image:
+    // ImagePreviewWidget *wgt = new ImagePreviewWidget(nullptr, false);
+    // wgt->setImage(originalFragment);
+    // wgt->show();
 
     resultingFragment = QImage(originalFragment);
 }
@@ -74,7 +97,7 @@ void ImageConversionThread::processImageFragment()
                 else
                     resultingFragment.setPixelColor(w, h, curColor);
 
-                // qApp->processEvents();
+                qApp->processEvents();
 
             }
         }

@@ -22,11 +22,9 @@ public:
     void processImageFragment ();
 
     bool isDone();
-
+    const QImage &result();
     float From();
     float To();
-
-    const QImage &result();
 
     void run();
 
@@ -46,7 +44,7 @@ private:
     QString& m_text;
 
     // Done flag.
-    bool bDone = false;
+    bool bDone;
 
 signals:
     void UpdateImage (const QImage& image);

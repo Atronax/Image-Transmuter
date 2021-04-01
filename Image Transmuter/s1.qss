@@ -11,10 +11,16 @@ stop: 0.8 #666666,
 stop: 0.9 #444444, 
 stop: 1 #222222);
 
-border-left: 5px double #222222;
-border-right: 5px double #222222;
+border-left: 4px double #222222;
+border-right: 4px double #222222;
 border-top: 4px groove #444444;
 border-bottom: 4px groove #444444;
+}
+
+ImagePreviewWidget
+{
+background:red;
+border: 2px solid black;
 }
 
 QPushButton
@@ -22,18 +28,11 @@ QPushButton
 padding: 2px;
 
 background: rgba(0,0,0,50);
-border: 1px groove black;
 border-radius: 7px;
 
 color: #ffffff;
 font-family: Avdira;
 font-size:14px;
-}
-
-QPushButton:hover
-{
-border: 1px groove black;
-background: rgba(0,0,255,25);
 }
 
 QPushButton:disabled
@@ -71,7 +70,7 @@ background-color: QLinearGradient(
 x1:0, y1:0, 
 x2:0, y2:1, 
 stop: 0 #222222, 
-stop: 0.02 #666666,
+stop: 0.05 #666666,
 stop: 0.1 #444444,
 stop: 0.2 #777777, 
 stop: 0.8 #777777,

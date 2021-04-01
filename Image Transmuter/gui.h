@@ -13,6 +13,7 @@
 #include <QIntValidator>
 
 #include "Helpers/imagepreviewwidget.h"
+#include "historylabel.h"
 
 enum ControlElement
 {
@@ -40,46 +41,48 @@ private:
     void setupValidators();
     void setupConnections();
     void disableControls();
-
+    void setRoundedCorners(int radius_tl, int radius_tr, int radius_bl, int radius_br);
 
     void updateUI(bool showControls);
-    void tuneOtherUIElements(ControlElement& element);
+    void updateUIElement(ControlElement& element);
     QString constraintThreshold(const QString& input);
 
     // Status Bar. Here we will see all the current processes.
-    QLabel *m_lStatus;
+    HistoryLabel *m_hlStatus;
 
     // Preview Widgets. Show previews of input and output images.
-    ImagePreviewWidget *m_ipwInput, *m_ipwOutput;
+    ImagePreviewWidget *m_ipwInput;
+    ImagePreviewWidget *m_ipwOutput;
 
     // Toggle Button to unveil/hide control block.
     QPushButton *m_pbToggleControls;
 
-    // Controls:
-    QList<QPair<QString, QWidget*>> m_controls;
-    QPair<QString, QWidget*> controlFor (const QString& name, QWidget* widget);
-
-
-
     // Buttons for choosing input image, text and font and their statuses.
-    QPushButton *m_pbChooseImage, *m_pbChooseText, *m_pbChooseFont;
-    QLabel *m_lChooseImage, *m_lChooseText, *m_lChooseFont;
-
+    // Buttons for starting conversion and saving the resulting image.
     // Editors for scale and threshold with regexp validator and status.
+    const int buttonSmall = 27;
+    const int buttonControls = 40;
+    const int buttonFixedWidth = 150;
+    const int textboxFixedHeight = 120;
+
+    QPushButton *m_pbQuit;
+    QPushButton *m_pbChooseImage;
+    QPushButton *m_pbChooseText;
+    QPushButton *m_pbChooseFont;
+    QPushButton *m_pbConvert;
+    QPushButton *m_pbSave;
+
+    QLineEdit *m_leScale;
+    QLineEdit *m_leThreshold;
     QIntValidator *m_leScaleValidator;
     QRegExpValidator *m_leThresholdValidator;
-    QLineEdit *m_leScale, *m_leThreshold;
-    QLabel *m_lScale, *m_lThreshold;
-
-    // Buttons to start conversion and save the resulting image;
-    QPushButton *m_pbConvert, *m_pbSave;
 
     // Text edit, where user can see the loaded text data.
     QTextEdit *m_teText;
 
     // Layouts.
-    QGridLayout *m_mainLayout, *m_ctrlLayout, *m_blankLayout;
-    QWidget *m_dummyWidget;
+    QGridLayout *m_mainLayout;
+    QGridLayout *m_controlsLayout;
 
 signals:
     void ImageChanged(const QString& filename);
@@ -89,9 +92,12 @@ signals:
     void ThresholdChanged(const QString& threshold);
     void ClickedConvert();
     void ClickedSave(const QString& path);
+    void UpdateStatus(const QString& status);
+    void UpdateUI(const QString& size);
 
 public slots:
     void OnToggleControls();
+    void OnQuit();
     void OnChooseImage();
     void OnChooseText();
     void OnChooseFont();
