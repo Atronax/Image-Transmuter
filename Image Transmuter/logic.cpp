@@ -26,15 +26,6 @@ void Logic::SetScale(uint s)
         m_scale.value = s;
 }
 
-void Logic::TuneOutputImage(QImage& image)
-{
-    int width = m_imageInput.width() * m_scale.value;
-    int height = m_imageInput.height() * m_scale.value;
-    QImage::Format format = QImage::Format_RGB888;
-
-    image = QImage (width, height, format);
-}
-
 void Logic::ConvertImage()
 {
     // We start with changing of gui element message to let user know of current procedure.
@@ -43,12 +34,26 @@ void Logic::ConvertImage()
 
     emit UpdateStatus("Processing started!");
 
+    ClearConversionThreads();
     SetupConversionThreads();
     StartConversionThreads();
+
+    InitializeImage(m_imageOutput);
     GatherConversionResults(m_imageOutput);
 
     // qDebug() << QString("Resulting image has these parameters. W: %1. H: %2.").arg(m_imageOutput.width()).arg(m_imageOutput.height());
     emit ImageConverted(m_imageOutput);    
+}
+
+void Logic::InitializeImage(QImage& image)
+{
+    int width = m_imageInput.width() * m_scale.value;
+    int height = m_imageInput.height() * m_scale.value;
+    QImage::Format format = QImage::Format_RGB888;
+    qDebug() << QString("Now image has W%1 and H%2.").arg(width).arg(height);
+
+
+    image = QImage (width, height, format);
 }
 
 void Logic::SetupConversionThreads()
@@ -79,7 +84,7 @@ void Logic::SetupConversionThreads()
 
 void Logic::StartConversionThreads()
 {
-    emit UpdateStatus("Threads starting their jobs.");
+    emit UpdateStatus("Threads are beginning their jobs.");
 
     foreach (ImageConversionThread* thread, threads)    
         thread->run();
@@ -116,15 +121,12 @@ void Logic::GatherConversionResults(QImage& image)
 
         int hFrom = thread->From() * image.height();
         int hTo = thread->To() * image.height();
+        if (hFrom != 0) hFrom -= m_scale.value;
 
-        if (hFrom != 0) ++hFrom;
-
-        qDebug() << QString("Current fragment has sizes {%1, %2} and will be put into height range {%3, %4}.").arg(fragment.width())
-                                                                                                              .arg(fragment.height())
-                                                                                                              .arg(hFrom).arg(hTo);
+        qDebug() << QString("Current fragment has sizes {%1, %2} and will be put into rectangle {upper-left(%3,%4), lower-right(%5,%6)}.").arg(fragment.width()).arg(fragment.height()).arg(0).arg(hFrom).arg(fragment.width()).arg(hTo);
 
         QPainter painter(&image);
-            painter.drawImage(0, hFrom, fragment);
+            painter.drawImage(QRect(0, hFrom, image.width(), hTo-hFrom), fragment);
         painter.end();
     }
 }
@@ -168,8 +170,7 @@ void Logic::OnImageChanged(const QString &filename)
 
     emit UpdateStatus ("New input image arrived. Setting the parameters of output image.");
 
-    m_imageInput = QImage(filename);
-    TuneOutputImage(m_imageOutput);
+    m_imageInput = QImage(filename);    
 
     emit UpdateStatus ("Operations on output image are done.");
 }
@@ -281,6 +282,8 @@ void Logic::OnClickedConvert()
 
 bool Logic::AllDataIsSet()
 {
+    qDebug() << m_text << m_imageInput.isNull() << m_font.isSet() << m_scale.isSet() << m_threshold.isSet();
+
     // If all parameters are set, we allow conversion and vice versa.
     if (!m_text.isEmpty() && !m_imageInput.isNull() && m_font.isSet() && m_scale.isSet() && m_threshold.isSet())
         return true;

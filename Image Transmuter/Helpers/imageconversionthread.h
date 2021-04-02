@@ -19,6 +19,7 @@ public:
     ~ImageConversionThread();
 
     void setImageFragment (const QImage& reference, float from, float to);
+    void setTextFragment (const QString& text, float from, float to);
     void processImageFragment ();
 
     bool isDone();
@@ -29,6 +30,8 @@ public:
     void run();
 
 private:
+    void showImageFragment(const QImage& fragment);
+
     // Range of original image height, that is used to crop the fragment.
     float m_from;
     float m_to;
@@ -41,7 +44,7 @@ private:
     Scale& m_scale;
     Threshold& m_threshold;
     Font& m_font;
-    QString& m_text;
+    QString m_text;
 
     // Done flag.
     bool bDone;

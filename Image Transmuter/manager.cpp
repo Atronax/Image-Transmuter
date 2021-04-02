@@ -21,6 +21,8 @@ Manager::~Manager()
 
     delete m_gui;
     m_gui = nullptr;
+
+    m_layout->deleteLater();
 }
 
 void Manager::mousePressEvent(QMouseEvent *event)
@@ -30,8 +32,9 @@ void Manager::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton)
     {
         m_mousePosition = event->globalPos() - frameGeometry().topLeft();
-        event->accept();
     }
+
+    event->accept();
 }
 
 void Manager::mouseMoveEvent(QMouseEvent *event)
@@ -39,8 +42,9 @@ void Manager::mouseMoveEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton)
     {
         move(event->globalPos() - m_mousePosition);
-        event->accept();
     }
+
+    event->accept();
 }
 
 void Manager::Init()
@@ -72,7 +76,7 @@ void Manager::MakeConnections()
     // Controller connects separated classes of GUI and Logic using signal-slot subsystem.
 
     // Updater for graphical user interface
-    connect(m_gui, SIGNAL(UpdateSize(const QString&)), this, SLOT(OnUpdateSize(const QString&)));
+    // connect(m_gui, SIGNAL(UpdateSize(const QString&)), this, SLOT(OnUpdateSize(const QString&)));
 
     // User chose new image in file dialog of GUI, Logic should set new image for image conversion.
     connect(m_gui, SIGNAL(ImageChanged(const QString&)), m_logic, SLOT(OnImageChanged(const QString&)));

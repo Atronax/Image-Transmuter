@@ -34,13 +34,20 @@ public:
     ~GUI();
 
 private:
+    void LoadImage(const QString& path);
+    void LoadText(const QString& path);
+    void SetFont (const QFont& font);
+    void SetScale (const QString& scale);
+    void SetThreshold (const QString& threshold);
+
     ControlElement m_currentUIElement;
 
     void makeGUI();
     void setupLayout();
     void setupValidators();
-    void setupConnections();
+    void makeConnections();
     void disableControls();
+    void defaults();
     void setRoundedCorners(int radius_tl, int radius_tr, int radius_bl, int radius_br);
 
     void updateUI(bool showControls);
@@ -52,25 +59,31 @@ private:
 
     // Preview Widgets. Show previews of input and output images.
     ImagePreviewWidget *m_ipwInput;
-    ImagePreviewWidget *m_ipwOutput;
+    ImagePreviewWidget *m_ipwOutput;    
 
     // Toggle Button to unveil/hide control block.
     QPushButton *m_pbToggleControls;
 
+    // Constraint values for input image
+    const int maxWidth = 2048;
+    const int maxHeight = 2048;
+
+    // Constraint values for gui elements.
+    const int buttonSmall = 24;
+    const int buttonControls = 40;
+    const int buttonFixedWidth = 140;
+    const int textboxFixedHeight = 120;
+    bool stepBYstep = true;
+
     // Buttons for choosing input image, text and font and their statuses.
     // Buttons for starting conversion and saving the resulting image.
     // Editors for scale and threshold with regexp validator and status.
-    const int buttonSmall = 27;
-    const int buttonControls = 40;
-    const int buttonFixedWidth = 150;
-    const int textboxFixedHeight = 120;
-
     QPushButton *m_pbQuit;
     QPushButton *m_pbChooseImage;
     QPushButton *m_pbChooseText;
     QPushButton *m_pbChooseFont;
     QPushButton *m_pbConvert;
-    QPushButton *m_pbSave;
+    QPushButton *m_pbSave;   
 
     QLineEdit *m_leScale;
     QLineEdit *m_leThreshold;

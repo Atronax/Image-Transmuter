@@ -17,18 +17,18 @@ HistoryLabel::~HistoryLabel()
 
 void HistoryLabel::wheelEvent(QWheelEvent *ev)
 {
-    qDebug() << "In HistoryLabel::wheelEvent";
+    // qDebug() << "In HistoryLabel::wheelEvent";
 
     int movement = ev->angleDelta().ry();
 
     if (movement > 0)
     {
-        qDebug() << "UP";
+        // qDebug() << "UP";
         emit userChangedTheMessage(true);
     }
     else
     {
-        qDebug() << "DOWN";
+        // qDebug() << "DOWN";
         emit userChangedTheMessage(false);
     }
 
@@ -42,15 +42,15 @@ void HistoryLabel::MakeConnections()
 
 void HistoryLabel::ShowCurrentMessage()
 {
-    qDebug() << QString("Current message %1 is \"%2\"").arg(m_currentMessageIndex).arg(m_messages.at(m_currentMessageIndex));
+    // qDebug() << QString("Current message %1 is \"%2\"").arg(m_currentMessageIndex).arg(m_messages.at(m_currentMessageIndex));
 
     if (!m_messages.isEmpty())
-        setText(m_messages.at(m_currentMessageIndex));
+        setText(QString("%1. %2").arg(m_currentMessageIndex).arg(m_messages.at(m_currentMessageIndex)));
 }
 
 void HistoryLabel::AddMessage(const QString &message)
 {
-    qDebug() << m_messages;
+    // qDebug() << m_messages;
 
     m_messages.append(message);
     m_currentMessageIndex = m_messages.count() - 1;
@@ -60,7 +60,7 @@ void HistoryLabel::AddMessage(const QString &message)
 
 void HistoryLabel::OnUserChangedTheMessage(bool toPrevious)
 {
-    qDebug() << "in HistoryLabel::OnUserChangedTheMessage";
+    // qDebug() << "in HistoryLabel::OnUserChangedTheMessage";
 
     if (toPrevious)
     {
@@ -75,7 +75,7 @@ void HistoryLabel::OnUserChangedTheMessage(bool toPrevious)
             m_currentMessageIndex = m_messages.count() - 1;
     }
 
-    qDebug() << QString("Current message has index: %1").arg(m_currentMessageIndex);
+    // qDebug() << QString("Current message has index: %1").arg(m_currentMessageIndex);
 
     ShowCurrentMessage();
 }

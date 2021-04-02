@@ -29,7 +29,7 @@ struct Scale
     }
 
     static const uint MIN = 1;
-    static const uint MAX = 13;
+    static const uint MAX = 17;
     uint value = 1;
 };
 

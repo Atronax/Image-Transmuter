@@ -53,7 +53,7 @@ private:
     // single image again. QPainter will do that task for us.
     void SetupConversionThreads();
     void StartConversionThreads();
-    void TuneOutputImage(QImage& image);
+    void InitializeImage(QImage& image);
     void GatherConversionResults(QImage& image);
     void ClearConversionThreads();
 

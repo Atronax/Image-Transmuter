@@ -8,15 +8,12 @@
 
 ImageConversionThread::ImageConversionThread(const QImage& reference, float from, float to,
                                              Scale& scale, Threshold& threshold, Font& font, QString& text)
-    : m_from(from),
-      m_to(to),
-      m_scale(scale),
-      m_threshold(threshold),
-      m_font(font),
-      m_text(text),
+    : m_from(from), m_to(to),
+      m_scale(scale), m_threshold(threshold), m_font(font),
       bDone(false)
 {
-    setImageFragment(reference, from, to);
+    setImageFragment(reference, m_from, m_to);
+    setTextFragment(text, m_from, m_to);
 }
 
 ImageConversionThread::~ImageConversionThread()
@@ -37,39 +34,63 @@ void ImageConversionThread::setImageFragment(const QImage& reference, float from
     // If to = 0.5, from = 0.25, then to - from = 0.5 - 0.25 = 0.25,
     // the original fragment will gave height of 25% of reference.height().
 
-
-    originalFragment = QImage(reference.width(), ceil((to - from)*reference.height()), QImage::Format_RGB888);
-
     int hFrom = from*reference.height();
     int hTo   = to*reference.height();
 
-    if (hFrom != 0) ++hFrom;
+    if (hFrom != 0) hFrom += m_scale.value;
+    int height = hTo - hFrom;
 
-    qDebug() << QString("%1 - %2 - %3").arg((to - from)*reference.height()).arg(from*reference.height()).arg(to*reference.height());
+    qDebug() << QString("hFrom = %1. hTo = %2. fragment width = %3. fragment height = %4.").arg(hFrom).arg(hTo).arg(reference.width()).arg(height);
 
-    for (int h = hFrom, ho = 0; h < hTo, ho < originalFragment.height(); ++h, ++ho)
+
+    originalFragment = QImage(reference.width(), height, QImage::Format_RGB888);
+
+    QPainter painter;
+    painter.begin(&originalFragment);
+        qDebug() << QRect(QPoint(0, hFrom), QPoint(reference.width(), hTo));
+        painter.drawImage(originalFragment.rect(), reference, QRect(QPoint(0, hFrom), QPoint(reference.width(), hTo)));
+    painter.end();
+
+    /*
+    int idx = 0, curw = 0, curh = 0;
+    for (int h = hFrom; h < hTo; ++h)
     {
         for (int w = 0; w < reference.width(); ++w)
         {
             QRgb pixel = reference.pixel(w, h);
-            originalFragment.setPixel(w, ho, pixel);
+
+            curw = idx % w;
+            curh = idx / w;
+            qDebug() << QString("Current W: %1. Current H: %2.").arg(curw).arg(curh);
+
+            // originalFragment.setPixel(curw, curh, pixel);
+
+            ++idx;
         }
     }
+    */
 
     // Lets see what we have in our fragment image:
-    // ImagePreviewWidget *wgt = new ImagePreviewWidget(nullptr, false);
-    // wgt->setImage(originalFragment);
-    // wgt->show();
+    // showImageFragment(originalFragment);
 
-    resultingFragment = QImage(originalFragment);
+    resultingFragment = QImage(originalFragment.width()*m_scale.value, originalFragment.height()*m_scale.value, QImage::Format_RGB888);
+    qDebug() << QString("Resulting fragment has values: W%1, H%2").arg(resultingFragment.width()).arg(resultingFragment.height());
+}
+
+void ImageConversionThread::setTextFragment(const QString &text, float from, float to)
+{
+    int position  = from * text.size();
+    int charCount = originalFragment.width() * originalFragment.height();
+
+    m_text = text.mid(position, charCount);
 }
 
 void ImageConversionThread::processImageFragment()
 {
-    qDebug() << "In ImageConversionThread::processImageFragment";
+    // qDebug() << "In ImageConversionThread::processImageFragment";
 
-    qDebug() << QString("Original  Fragment has these parameters. W: %1. H: %2.").arg( originalFragment.width()).arg( originalFragment.height());
-    qDebug() << QString("Resulting Fragment has these parameters. W: %1. H: %2.").arg(resultingFragment.width()).arg(resultingFragment.height());
+    // qDebug() << QString("Original  Fragment has these parameters. W: %1. H: %2.").arg( originalFragment.width()).arg( originalFragment.height());
+    // qDebug() << QString("Resulting Fragment has these parameters. W: %1. H: %2.").arg(resultingFragment.width()).arg(resultingFragment.height());
 
     QPainter painter;
     painter.begin(&resultingFragment);
@@ -92,19 +113,20 @@ void ImageConversionThread::processImageFragment()
                     if (!m_text.isEmpty())
                         painter.drawText(w*m_scale.value, h*m_scale.value, m_text.at(charIdx++));
                     else
-                        painter.drawText(w*m_scale.value, h*m_scale.value, QString(0x2309)); // or QString::number(rand()%2) etc.
+                        painter.drawText(w*m_scale.value, h*m_scale.value, QString::number(rand()%2));
                 }
                 else
-                    resultingFragment.setPixelColor(w, h, curColor);
+                    resultingFragment.setPixelColor(w*m_scale.value, h*m_scale.value, curColor);
 
                 qApp->processEvents();
 
             }
         }
 
-        painter.end();
+    painter.end();
 
-        bDone = true;
+    // showImageFragment(resultingFragment);
+    bDone = true;
 }
 
 bool ImageConversionThread::isDone()
@@ -130,4 +152,14 @@ const QImage &ImageConversionThread::result()
 void ImageConversionThread::run()
 {
     processImageFragment();
+}
+
+void ImageConversionThread::showImageFragment(const QImage &fragment)
+{
+    qDebug() << fragment.width() << fragment.height();
+
+    ImagePreviewWidget *wgt = new ImagePreviewWidget(nullptr, false);
+    wgt->setImage(fragment);
+    wgt->setFixedSize(fragment.size());
+    wgt->show();
 }

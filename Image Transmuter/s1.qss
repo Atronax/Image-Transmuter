@@ -37,6 +37,8 @@ font-size:14px;
 
 QPushButton:disabled
 {
+padding: 2px;
+
 background: rgba(200,255,10,0);
 border: 0px solid black;
 color: gray;
