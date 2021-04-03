@@ -159,7 +159,7 @@ void ImageConversionThread::showImageFragment(const QImage &fragment)
     qDebug() << fragment.width() << fragment.height();
 
     ImagePreviewWidget *wgt = new ImagePreviewWidget(nullptr, false);
-    wgt->setImage(fragment);
+    wgt->updateImage(fragment);
     wgt->setFixedSize(fragment.size());
     wgt->show();
 }

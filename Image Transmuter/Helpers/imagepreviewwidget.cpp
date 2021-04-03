@@ -1,6 +1,7 @@
 #include "imagepreviewwidget.h"
 
 #include <QMouseEvent>
+#include <QProcess>
 #include <QDebug>
 
 ImagePreviewWidget::ImagePreviewWidget(QWidget* parent, bool clickable, bool free)
@@ -11,6 +12,8 @@ ImagePreviewWidget::ImagePreviewWidget(QWidget* parent, bool clickable, bool fre
     init();
     makeGUI();
     makeConnections();
+
+
 }
 
 ImagePreviewWidget::~ImagePreviewWidget()
@@ -34,8 +37,9 @@ void ImagePreviewWidget::paintEvent(QPaintEvent *event)
         if (!m_bFree && !m_imagePreview.isNull())
             m_painter.drawImage(rect(), m_imagePreview);
 
-        if (m_bFree && !m_imageFull.isNull())
-            m_painter.drawImage(rect(), m_imageFull);
+        if (m_bFree && !m_imageFragment.isNull())
+            m_painter.drawImage(rect(), m_imageFragment);
+
         m_painter.setPen(m_pen);
         m_painter.drawRect(rect());
     m_painter.end();
@@ -47,8 +51,9 @@ void ImagePreviewWidget::mouseDoubleClickEvent(QMouseEvent *event)
     {
         if (m_bClickable && !m_imageFull.isNull())
         {
-            ImagePreviewWidget* preview = new ImagePreviewWidget(nullptr, false, true);
-            preview->setImage(m_imageFull);
+            ImagePreviewWidget* preview = new ImagePreviewWidget(nullptr, false, true);                        
+            preview->updateImage(m_imageFragment);
+            preview->setFixedSize(m_imageFragment.size());
             preview->show();
         }
     }
@@ -77,21 +82,20 @@ QPen ImagePreviewWidget::getPenFor(const QColor &color, const Qt::BrushStyle &br
     return QPen(QBrush(color, brushStyle), width);
 }
 
-void ImagePreviewWidget::setImage(const QImage &image)
+void ImagePreviewWidget::updateImage(const QImage &image)
 {
-    // qDebug() << QString("IW=%1, IH=%2").arg(image.width()).arg(image.height());
+    // qDebug() << QString("IW=%1, IH=%2").arg(image.width()).arg(image.height());    
 
     if (!m_bImageFullSet)
     {
         m_imageFull = image;
-        // if (m_imageFull.width() > m_widthMax || m_imageFull.height() > m_heightMax)
-        //     m_imageFull = m_imageFull.scaledToWidth(m_widthMax);
+        cropFragment(m_imageFull, m_imageFragment, QRect(0,0,400,400));
 
+        m_lSize->setText(QString("%1x%2").arg(m_imageFull.width()).arg(m_imageFull.height()));
         m_bImageFullSet = true;
     }
-    m_imagePreview = image.scaled(m_width, m_height);
-    m_lSize->setText(QString("%1x%2").arg(m_imageFull.width()).arg(m_imageFull.height()));
 
+    m_imagePreview = image.scaled(m_width, m_height);
     repaint();
 }
 
@@ -136,6 +140,22 @@ bool ImagePreviewWidget::isAllowedScaleFactor(float value)
         return false;
 }
 
+void ImagePreviewWidget::cropFragment(QImage &original, QImage &fragment, QRect rect)
+{
+    if (rect.x() < 0 || rect.y() < 0)
+        return;
+
+    if (rect.width() > 500 || rect.height() > 500)
+        return;
+
+    fragment = QImage(rect.width(), rect.height(), QImage::Format_RGB888);
+
+    QPainter painter;
+    painter.begin(&fragment);
+    painter.drawImage(fragment.rect(), original, rect);
+    painter.end();
+}
+
 void ImagePreviewWidget::OnUserScaledTheImage(bool zoomIn)
 {
     if (zoomIn)
@@ -146,9 +166,9 @@ void ImagePreviewWidget::OnUserScaledTheImage(bool zoomIn)
         {
             m_scaleFactor += m_scaleFactorStep;
 
-            m_scaledFragment = m_imageFull.scaled(m_scaleFactor*m_imageFull.width(),m_scaleFactor*m_imageFull.height());
+            m_scaledFragment = m_imageFragment.scaled(m_scaleFactor*m_imageFragment.width(),m_scaleFactor*m_imageFragment.height());
             setFixedSize(m_scaledFragment.size());
-            setImage(m_scaledFragment);
+            updateImage(m_scaledFragment);
         }
     }
     else
@@ -160,13 +180,15 @@ void ImagePreviewWidget::OnUserScaledTheImage(bool zoomIn)
             m_scaleFactor -= m_scaleFactorStep;
 
             if (m_scaleFactor == m_scaleFactorMin)
-                setImage(m_imageFull);
+                updateImage(m_imageFragment);
             else
             {
-                m_scaledFragment = m_imageFull.scaled(m_scaleFactor*m_imageFull.width(),m_scaleFactor*m_imageFull.height());
+                m_scaledFragment = m_imageFragment.scaled(m_scaleFactor*m_imageFragment.width(),m_scaleFactor*m_imageFragment.height());
                 setFixedSize(m_scaledFragment.size());
-                setImage(m_scaledFragment);
+                updateImage(m_scaledFragment);
             }
         }
     }
+
+    m_lSize->setText(QString("%1x%2").arg(m_scaledFragment.width()).arg(m_scaledFragment.height()));
 }

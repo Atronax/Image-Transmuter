@@ -19,6 +19,7 @@ private:
     void MakeConnections();
     void ShowCurrentMessage();
 
+    // List of messages and index of current message.
     int m_currentMessageIndex;
     QStringList m_messages;
 

@@ -272,7 +272,7 @@ void GUI::LoadImage(const QString &path)
         emit ImageChanged(path);
         emit UpdateStatus(QString("New input image has been set: %1").arg(path));
 
-        m_ipwInput->setImage(image);
+        m_ipwInput->updateImage(image);
 
         // Hide other UI elements to make user do it step by step.
         m_currentUIElement = ControlElement::ChooseImage;
@@ -412,7 +412,7 @@ void GUI::OnImageConverted(const QImage &image)
 {
     // When this slot receives image, we update status and set preview item.
     emit UpdateStatus("Received Output Image. Trying to show its preview.");
-    m_ipwOutput->setImage(image);
+    m_ipwOutput->updateImage(image);
 
     // Also tune other UI elements
     m_currentUIElement = ControlElement::ButtonConvert;
